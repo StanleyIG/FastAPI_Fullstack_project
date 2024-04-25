@@ -1,7 +1,10 @@
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+# import sys
+# from os.path import abspath, dirname
 
+# #sys.path.insert(0, dirname(dirname(abspath(__file__))))
 from app.config import settings
 
 if settings.MODE == "TEST":
@@ -15,7 +18,8 @@ engine = create_async_engine(DATABASE_URL, **DATABASE_PARAMS)
 engine_nullpool = create_async_engine(DATABASE_URL, poolclass=NullPool)
 
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
-async_session_maker_nullpool = async_sessionmaker(engine_nullpool, expire_on_commit=False)
+async_session_maker_nullpool = async_sessionmaker(
+    engine_nullpool, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
