@@ -1,0 +1,2 @@
+https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/
+https://fastapi.tiangolo.com/tutorial/sql-databases/
