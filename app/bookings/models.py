@@ -3,16 +3,15 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Column, Computed, Date, ForeignKey, Integer
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from app.database import Base
-# from app.hotels.rooms.models import Rooms
-# from app.users.models import Users
+#from app.hotels.rooms.models import Rooms
+#from app.users.models import Users
 from app.hotels.models import Hotels # Импортировал модель Hotel т.к. она нужна для relationship связной модели Hotels
 
-# if TYPE_CHECKING:
-#     # Чтоб убрать ошибки IDE при предупреждении отсутствия импорта
-#     from app.hotels.rooms.models import Rooms
-#     from app.users.models import Users
+if TYPE_CHECKING:
+    # Чтоб убрать ошибки IDE при предупреждении отсутствия импорта
+    from app.hotels.rooms.models import Rooms
+    from app.users.models import Users
     
-
 
 class Bookings(Base):
     __tablename__ = "bookings"

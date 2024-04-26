@@ -15,24 +15,40 @@ class BookingDAO(BaseDAO):
     model = Bookings
 
     @classmethod
-    # async def find_all(cls, user_id: int):
-    #     async with async_session_maker() as session:
-    #         query = (
-    #             select(Bookings.__table__.columns).where(Bookings.user_id == user_id)
-    #         )
-
-    #         result = await session.execute(query)
-    #         return result.mappings().all()
     async def find_all(cls, user_id: int):
         async with async_session_maker() as session:
             query = (
-                select(Bookings.__table__.columns)
-                .where(Bookings.user_id == user_id)
-                .join(Bookings.room)
-            )
-            
+            select(Bookings.room)
+            .select_from(Bookings)
+            .join(Rooms, on=Bookings.room_id == Rooms.id)
+        )
+
             result = await session.execute(query)
-            return result.mappings().all()
+            res = result.mappings().all()
+            return res
+    
+    @classmethod
+    async def find_need_to_remind(cls, days: int):
+        async with async_session_maker_nullpool() as session:
+            query = (
+                select(Bookings.room)
+                # .options(joinedload(Bookings.user))
+                .filter(date.today() == Bookings.date_from - timedelta(days=days))
+            )
+            result = await session.execute(query)
+            return result.scalars().all()
+
+
+    # async def find_all(cls, user_id: int):
+    #     async with async_session_maker() as session:
+    #         query = (
+    #             select(Bookings)
+    #             .where(Bookings.user_id == user_id)
+    #             .join(Bookings.room)
+    #         )
+            
+    #         result = await session.execute(query)
+    #         return result.mappings().all()
 
     
 
