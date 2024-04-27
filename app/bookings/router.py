@@ -32,7 +32,7 @@ async def get_bookings():
 async def get_booking(days: int):
     result = await BookingDAO.find_need_to_remind(days)
     #room = booking.room
-    #print(result)
+    print(type(result))
     return result#{"room": room.to_dict()}
 
 
