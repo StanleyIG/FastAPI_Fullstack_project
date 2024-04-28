@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from app.bookings.models import Bookings
 from app.dao.base import BaseDAO
-from app.database import async_session_maker, async_session_maker_nullpool
+from app.database import async_session_maker, async_session_maker_nullpool, engine
 from app.exceptions import RoomFullyBooked
 from app.hotels.rooms.models import Rooms
 from app.logger import logger
@@ -20,6 +20,7 @@ class BookingDAO(BaseDAO):
         async with async_session_maker() as session:
             query = (
                 select(
+                    # __table__.columns нужен для отсутствия вложенности в ответе Алхимии
                     Bookings.__table__.columns,
                     Rooms.__table__.columns,
                 )
@@ -85,15 +86,15 @@ class BookingDAO(BaseDAO):
                         )
                     )
                     .select_from(Rooms)
+                    # т.к. обращение происходит к связной таблице booked_rooms.c.room_id, то обращение идёт через "c" т.е. column .c.room_id
                     .join(booked_rooms, booked_rooms.c.room_id == Rooms.id, isouter=True)
                     .where(Rooms.id == room_id)
                     .group_by(Rooms.quantity, booked_rooms.c.room_id)
                 )
 
-                
+                # print(get_rooms_left.compile(engine, compile_kwargs={"literal_binds": True}))
                 rooms_left = await session.execute(get_rooms_left)
                 rooms_left: int = rooms_left.scalar()
-
                 logger.debug(f"{rooms_left=}")
 
                 if rooms_left > 0:

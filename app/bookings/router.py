@@ -36,3 +36,19 @@ async def get_booking(days: int):
     return result#{"room": room.to_dict()}
 
 
+@router.post("/add", status_code=201)
+async def add_booking(
+    booking: SNewBooking,
+):
+    booking = await BookingDAO.add(
+        1,
+        booking.room_id,
+        booking.date_from,
+        booking.date_to,
+    )
+    if not booking:
+        raise RoomCannotBeBooked
+    return booking
+
+
+
