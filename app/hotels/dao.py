@@ -15,6 +15,7 @@ class HotelDAO(BaseDAO):
 
     @classmethod
     async def find_all(cls, location: str, date_from: date, date_to: date):
+        # количество забронированных комнат для каждого номера в отеле в указанный период
         """
         WITH booked_rooms AS (
             SELECT room_id, COUNT(room_id) AS rooms_booked
@@ -34,6 +35,7 @@ class HotelDAO(BaseDAO):
         LEFT JOIN booked_hotels ON booked_hotels.hotel_id = hotels.id
         WHERE rooms_left > 0 AND location LIKE '%Алтай%';
         """
+        # количество забронированных комнат для каждого номера в отеле в указанный период
         booked_rooms = (
             select(Bookings.room_id, func.count(Bookings.room_id).label("rooms_booked"))
             .select_from(Bookings)
@@ -52,7 +54,8 @@ class HotelDAO(BaseDAO):
             .group_by(Bookings.room_id)
             .cte("booked_rooms")
         )
-
+        
+        # колличество свободных номеров в каждом отеле
         booked_hotels = (
             select(Rooms.hotel_id, func.sum(
                     Rooms.quantity - func.coalesce(booked_rooms.c.rooms_booked, 0)
@@ -62,10 +65,11 @@ class HotelDAO(BaseDAO):
             .group_by(Rooms.hotel_id)
             .cte("booked_hotels")
         )
-
+        
+        # получение всех полей из таблицы hotels и подзапроса booked_hotels из определённой локации
         get_hotels_with_rooms = (
             select(
-                Hotels.__table__.columns,
+                Hotels.__table__.columns, # чтобы избежать вложенности, а так-же для получение более удобочитаемого словаря hotels_with_rooms.mappings().all()
                 booked_hotels.c.rooms_left,
             )
             .join(booked_hotels, booked_hotels.c.hotel_id == Hotels.id, isouter=True)
@@ -79,4 +83,4 @@ class HotelDAO(BaseDAO):
         async with async_session_maker() as session:
             # logger.debug(get_hotels_with_rooms.compile(engine, compile_kwargs={"literal_binds": True}))
             hotels_with_rooms = await session.execute(get_hotels_with_rooms)
-            return hotels_with_rooms.mappings().all()
+            return hotels_with_rooms.mappings().all() # mapping().all() возвращает dict

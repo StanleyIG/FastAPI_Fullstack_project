@@ -4,10 +4,9 @@ from pydantic import TypeAdapter
 from app.bookings.dao import BookingDAO
 from app.bookings.schemas import SBookingInfo, SNewBooking
 from app.exceptions import RoomCannotBeBooked
-# from app.tasks.tasks import send_booking_confirmation_email
-# from app.users.dependencies import get_current_user
+from app.tasks.tasks import send_booking_confirmation_email
+from app.users.dependencies import get_current_user
 from app.users.models import Users
-from app.database import async_session_maker
 
 router = APIRouter(
     prefix="/bookings",
@@ -15,40 +14,32 @@ router = APIRouter(
 )
 
 
-# @router.get("")
-# async def get_bookings():
-#     async with async_session_maker() as session:
-#         query = select(Booking)
-#         result = await session.execute(query)
-#         return result
-
 @router.get("")
-async def get_bookings():
-    result = await BookingDAO.find_all(user_id=1)
-    return result
+async def get_bookings(user: Users = Depends(get_current_user)) -> list[SBookingInfo]:
+    return await BookingDAO.find_all_with_images(user_id=user.id)
 
 
-@router.get("/{days}")
-async def get_booking(days: int):
-    result = await BookingDAO.find_need_to_remind(days)
-    #room = booking.room
-    print(type(result))
-    return result#{"room": room.to_dict()}
-
-
-@router.post("/add", status_code=201)
+@router.post("", status_code=201)
 async def add_booking(
     booking: SNewBooking,
+    background_tasks: BackgroundTasks,
+    user: Users = Depends(get_current_user),
 ):
     booking = await BookingDAO.add(
-        1,
+        user.id,
         booking.room_id,
         booking.date_from,
         booking.date_to,
     )
     if not booking:
         raise RoomCannotBeBooked
+    booking = TypeAdapter(SNewBooking).validate_python(booking).model_dump()
     return booking
 
 
-
+@router.delete("/{booking_id}")
+async def remove_booking(
+    booking_id: int,
+    current_user: Users = Depends(get_current_user),
+):
+    await BookingDAO.delete(id=booking_id, user_id=current_user.id)
