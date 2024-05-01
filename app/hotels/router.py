@@ -18,6 +18,7 @@ async def get_hotels_by_location_and_time(
     date_from: date = Query(..., description=f"Например, {datetime.now().date()}"),
     date_to: date = Query(..., description=f"Например, {(datetime.now() + timedelta(days=14)).date()}"),
 ) -> List[SHotelInfo]:
+    
     if date_from > date_to:
         raise DateFromCannotBeAfterDateTo
     if (date_to - date_from).days > 31:
