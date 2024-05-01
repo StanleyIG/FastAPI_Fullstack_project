@@ -19,6 +19,7 @@ router_users = APIRouter(
 
 @router_auth.post("/register", status_code=201)
 async def register_user(user_data: SUserAuth):
+    print(user_data)
     existing_user = await UserDAO.find_one_or_none(email=user_data.email)
     if existing_user:
         raise UserAlreadyExistsException
