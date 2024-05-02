@@ -25,7 +25,7 @@ from app.logger import logger
 from app.pages.router import router as router_pages
 from app.prometheus.router import router as router_prometheus
 from app.users.router import router_auth, router_users
-from app.base.routes import router as base_routes
+from app.base.routes import router as base_router
 
 
 def create_app():
@@ -69,7 +69,8 @@ def create_app():
         allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers",
                        "Access-Control-Allow-Origin",
                        "Authorization"],
-    )
+                       )
+
     # Подключение версионирования
     app = VersionedFastAPI(app,
                            version_format='{major}',
@@ -84,10 +85,11 @@ def create_app():
     app.include_router(router_bookings)
 
     app.include_router(router_images)
+    app.include_router(router_prometheus)
     app.include_router(router_import)
 
     app.include_router(router_pages)
-    app.include_router(base_routes)
+    app.include_router(base_router)
 
     if settings.MODE == "TEST":
         redis = aioredis.from_url(

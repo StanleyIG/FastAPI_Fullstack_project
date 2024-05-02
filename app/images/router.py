@@ -15,5 +15,5 @@ async def add_hotel_image(name: int, file: UploadFile):
     with open(im_path, "wb+") as file_object:
         # Сохраняем файл в локальное хранилище (на практике обычно сохраняется в удаленное хранилище)
         shutil.copyfileobj(file.file, file_object)
-    # Отдаем Celery фоновую задачу на обработку картинки
+    # Отдаем Celery фоновую задачу на обработку картинки (уменьшить картинку)
     process_pic.delay(im_path)

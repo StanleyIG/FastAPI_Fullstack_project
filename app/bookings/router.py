@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
 from pydantic import TypeAdapter
-
+from pydantic import parse_obj_as
 from app.bookings.dao import BookingDAO
 from app.bookings.schemas import SBookingInfo, SNewBooking
 from app.exceptions import RoomCannotBeBooked
@@ -23,18 +23,26 @@ async def get_bookings(user: Users = Depends(get_current_user)) -> list[SBooking
 async def add_booking(
     booking: SNewBooking,
     background_tasks: BackgroundTasks,
-    user: Users = Depends(get_current_user),
+    #user: Users = Depends(get_current_user),
 ):
     booking = await BookingDAO.add(
-        user.id,
+        #user.id,
+        1,
         booking.room_id,
         booking.date_from,
         booking.date_to,
     )
     if not booking:
         raise RoomCannotBeBooked
+    
+    # TypeAdapter это новая фича из Pydantic 2.0, ей передаётся тип данных, а потом вызывается validate_python()
+    # которому передаётся объект Python, в данном случае передаю объект модели Алхимии, привожу её к типу модели Pydantic "SNewBooking",
+    # далее вызывается model_dump() который формирует из объекта модели Pydantic тип данных dict словарь.
     booking = TypeAdapter(SNewBooking).validate_python(booking).model_dump()
+    # как вариант можно использовать parse_obj_as из Pydantic
+    # booking = parse_obj_as(SNewBooking, booking).dict()
     # send_booking_confirmation_email.delay(booking, user.email)
+    send_booking_confirmation_email.delay(booking, 1)
     # background_tasks.add_task(send_booking_confirmation_email, booking, user.email)
     return booking
 
