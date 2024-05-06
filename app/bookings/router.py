@@ -7,6 +7,7 @@ from app.exceptions import RoomCannotBeBooked
 from app.tasks.tasks import send_booking_confirmation_email
 from app.users.dependencies import get_current_user
 from app.users.models import Users
+#from app.users.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/bookings",
@@ -22,12 +23,11 @@ async def get_bookings(user: Users = Depends(get_current_user)) -> list[SBooking
 @router.post("", status_code=201)
 async def add_booking(
     booking: SNewBooking,
-    background_tasks: BackgroundTasks,
-    #user: Users = Depends(get_current_user),
-):
+    # background_tasks: BackgroundTasks,
+    user: Users = Depends(get_current_user)):
+    #print(user)
     booking = await BookingDAO.add(
-        #user.id,
-        1,
+        user.id,
         booking.room_id,
         booking.date_from,
         booking.date_to,
@@ -42,7 +42,7 @@ async def add_booking(
     # как вариант можно использовать parse_obj_as из Pydantic
     # booking = parse_obj_as(SNewBooking, booking).dict()
     # send_booking_confirmation_email.delay(booking, user.email)
-    send_booking_confirmation_email.delay(booking, 1)
+    #send_booking_confirmation_email.delay(booking, 1)
     # background_tasks.add_task(send_booking_confirmation_email, booking, user.email)
     return booking
 

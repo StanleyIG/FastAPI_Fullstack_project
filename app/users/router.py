@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Response, Form
 
 from app.exceptions import CannotAddDataToDatabase, UserAlreadyExistsException
 from app.users.auth import authenticate_user, create_access_token, get_password_hash
@@ -17,14 +19,14 @@ router_users = APIRouter(
     tags=["Пользователи"],
 )
 
+
 @router_auth.post("/register", status_code=201)
-async def register_user(user_data: SUserAuth):
-    print(user_data)
-    existing_user = await UserDAO.find_one_or_none(email=user_data.email)
+async def register_user(email: Annotated[str, Form()], password: Annotated[str, Form()]):
+    existing_user = await UserDAO.find_one_or_none(email=email)
     if existing_user:
         raise UserAlreadyExistsException
-    hashed_password = get_password_hash(user_data.password)
-    new_user = await UserDAO.add(email=user_data.email, hashed_password=hashed_password)
+    hashed_password = get_password_hash(password)
+    new_user = await UserDAO.add(email=email, hashed_password=hashed_password)
     if not new_user:
         raise CannotAddDataToDatabase
 

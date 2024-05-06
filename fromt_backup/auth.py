@@ -1,22 +1,22 @@
 from datetime import date, datetime, timedelta
-
-from fastapi import APIRouter, Depends, Request
+from fastapi import responses
+from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from app.bookings.router import add_booking, get_bookings
-from app.exceptions import RoomCannotBeBooked
 from app.hotels.rooms.router import get_rooms_by_time
 from app.hotels.router import get_hotel_by_id, get_hotels_by_location_and_time
 from app.utils import format_number_thousand_separator, get_month_days
-from app.bookings.schemas import SBookingInfo, SNewBooking
-from app.bookings.dao import BookingDAO
-from app.users.dependencies import get_current_user
-from app.users.models import Users
+from app.exceptions import CannotAddDataToDatabase, UserAlreadyExistsException
+from app.users.auth import authenticate_user, create_access_token, get_password_hash
+from app.users.router import login_user
+from app.users.dao import UserDAO
 
 
 router = APIRouter(
-    prefix="/pages",
+    # prefix="/",
     tags=["Фронтенд"]
 )
 
@@ -24,14 +24,68 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 
+# @router.get("/login", response_class=HTMLResponse)
+# async def get_login_page(request: Request):
+#     form = await request.form()
+#     form_register_data = {
+#             'email': form.get('email'),
+#             'password': form.get('password'),
+#         }
+    
+#     return templates.TemplateResponse("auth/login.html", {"request": request})
+
 @router.get("/login", response_class=HTMLResponse)
+@router.post("/login", response_class=HTMLResponse)
 async def get_login_page(request: Request):
-    return templates.TemplateResponse("auth/login.html", {"request": request})
+    if request.method == "POST":
+        form = await request.form()
+        form_register_data = {
+            'email': form.get('email'),
+            'password': form.get('password'),
+        }
+        user = await authenticate_user(form_register_data.get('email'), form_register_data.get('password'))
+        access_token = create_access_token({"sub": str(user.id)})
+        response = RedirectResponse("/bookings", status_code=302)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            samesite="Lax",
+            secure=True,
+        )
+        return response
+        #return responses.RedirectResponse('/bookings', status_code=303)
+        # print(access_token)
+        # response = RedirectResponse('/login')
+        # response.set_cookie("booking_access_token", access_token, httponly=True, samesite="none", secure=True)
+        # token = request.cookies.get("booking_access_token")
+        # print(token)
+        # return responses.RedirectResponse('/bookings', status_code=303)
+    if request.method == 'GET':
+        return templates.TemplateResponse("auth/login.html", {"request": request})
 
 
 @router.get("/register", response_class=HTMLResponse)
+@router.post("/register", response_class=HTMLResponse)
 async def get_register_page(request: Request):
-    return templates.TemplateResponse("auth/register.html", {"request": request})
+    if request.method == 'POST':
+        form = await request.form()#await request.form()
+        #print(form)
+        form_register_data = {
+            'email': form.get('email'),
+            'password': form.get('password'),
+        }
+        #print(form_register_data)
+        existing_user = await UserDAO.find_one_or_none(email=form_register_data.get('email'))
+        if existing_user:
+            raise UserAlreadyExistsException
+        hashed_password = get_password_hash(form_register_data.get('password'))
+        new_user = await UserDAO.add(email=form_register_data.get('email'), hashed_password=hashed_password)
+        if not new_user:
+            raise CannotAddDataToDatabase
+        return responses.RedirectResponse('/login', status_code=303)
+    if request.method == 'GET':
+        return templates.TemplateResponse("auth/register.html", {"request": request})
 
 
 @router.get("/hotels/{location}", response_class=HTMLResponse)
@@ -108,26 +162,12 @@ async def get_rooms_page(
 
 @router.post("/successful_booking", response_class=HTMLResponse)
 async def get_successful_booking_page(
-    request: Request, user: Users = Depends(get_current_user)):#, _=Depends(add_booking)):
-    data = await request.form()
-    booking = SNewBooking(**dict(data))
-    booking = await BookingDAO.add(
-        user.id,
-        booking.room_id,
-        booking.date_from,
-        booking.date_to,
+    request: Request,
+    _=Depends(add_booking),
+):
+    return templates.TemplateResponse(
+        "bookings/booking_successful.html", {"request": request}
     )
-    if not booking:
-        raise RoomCannotBeBooked
-    
-    # импорт зависимостей для Celery, ссответвующий код...
-    # редирект с кодом 303 чтоб редиректнул на другую страницу, а не только что загруженный ресурс, и соответвенно это будет GET запрос
-    response = RedirectResponse('/pages/bookings', status_code=303)
-    return response
-    
-    # return templates.TemplateResponse(
-    #     "bookings/booking_successful.html", {"request": request}
-    # )
 
 
 @router.get("/bookings", response_class=HTMLResponse)

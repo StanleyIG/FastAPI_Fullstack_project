@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#register-form').submit(function(event) {
+                event.preventDefault();
+
+                const email = $('#email').val();
+                const password = $('#password').val();
+                $.ajax({
+                    url: "http://localhost:8000/api/v1/auth/register",
+                    method: 'POST',
+                    data: {
+                        email: email,
+                        password: password,
+                    },
+                    success: function(response) {
+                        if (response.status === 201) {
+                            window.location.href = "/pages/login"
+                        }
+                    },
+                    error: function(error) {
+                        alert(error.responseJSON.detail);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col items-center justify-center h-screen">
+            <span class="font-bold text-3xl mb-10">🏩 Набронировал</span>
+
+        <div>
+            <form id="register-form">
+                <div class="flex flex-col items-start text-xl mb-5">
+                    <label for="email" class="mb-1">Email</label>
+                    <input class="border-b-2 border-yellow-400 mb-4" id="email" name="email" type="text" value="" placeholder="user@mail.ru">
+
+                    <label for="password" class="mb-1">Пароль</label>
+                    <input class="border-b-2 border-yellow-400" id="password" name="password" type="password" value="" placeholder="password">
+                    <span id="wrong_credentials" class="text-sm text-red-400"></span>
+                </div>
+
+                <button type="submit" class="text-xl bg-yellow-400 px-3 py-2 rounded-3xl mb-3">Зарегистрироваться</button>
+            </form>
+        </div>
+        <span>
+            Уже зарегистрированы?
+            <a href="/pages/login"
+               class="underline text-blue-600 hover:text-blue-800 visited:text-purple-600">
+                Войти
+            </a>
+        </span>
+    </div>
+{% endblock %}
