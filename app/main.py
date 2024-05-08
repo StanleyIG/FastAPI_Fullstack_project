@@ -125,16 +125,16 @@ def create_app():
     return app
 
 
-app = create_app()
+# app = create_app()
 
-if __name__ == "__main__":
-    import uvicorn
+# if __name__ == "__main__":
+#     import uvicorn
 
-    import os.path
-    import sys
-    sys.path.append(os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), os.pardir))
-    uvicorn.run(
-        app="app.main:app",
-        reload=True,
-    )
+#     import os.path
+#     import sys
+#     sys.path.append(os.path.join(os.path.dirname(
+#         os.path.realpath(__file__)), os.pardir))
+#     uvicorn.run(
+#         app="app.main:app",
+#         reload=True,
+#     )

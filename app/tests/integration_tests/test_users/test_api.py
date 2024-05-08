@@ -19,8 +19,8 @@ async def test_register_user(email, password, status_code, ac: AsyncClient):
 
 @pytest.mark.parametrize("email,password,status_code", [
     ("test@test.com", "test", 200),
-    ("artem@example.com", "artem", 200),
-    ("wrong@person.com", "artem", 401),
+    ("user1@example.com", "user1", 200),
+    ("user2@person.com", "user2", 401),
 ])
 async def test_login_user(email, password, status_code, ac: AsyncClient):
     response = await ac.post("/api/v1/auth/login", json={
