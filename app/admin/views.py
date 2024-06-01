@@ -16,7 +16,7 @@ class UsersAdmin(ModelView, model=Users):
 
 
 class HotelsAdmin(ModelView, model=Hotels):
-    column_list = [c.name for c in Hotels.__table__.c] + [Hotels.rooms]
+    column_list = [c.name for c in Hotels.__table__.c] + [Hotels.room]
     name = "Отель"
     name_plural = "Отели"
     icon = "fa-solid fa-hotel"

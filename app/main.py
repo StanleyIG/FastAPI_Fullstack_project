@@ -35,12 +35,22 @@ def create_app():
         root_path="/api",
     )
 
-    if settings.MODE != "TEST":
-        # Подключение Sentry для мониторинга ошибок.
-        sentry_sdk.init(
-            dsn=settings.SENTRY_DSN,
-            traces_sample_rate=1.0,
-        )
+    app.include_router(router_auth)
+    app.include_router(router_users)
+    app.include_router(router_hotels)
+    app.include_router(router_rooms)
+    app.include_router(router_bookings)
+
+    app.include_router(router_images)
+    app.include_router(router_prometheus)
+    app.include_router(router_import)
+
+    # if settings.MODE != "TEST":
+    #     # Подключение Sentry для мониторинга ошибок.
+    #     sentry_sdk.init(
+    #         dsn=settings.SENTRY_DSN,
+    #         traces_sample_rate=1.0,
+    #     )
 
     origins = [
         # порт 3000 для React.js например
@@ -59,7 +69,7 @@ def create_app():
         FastAPICache.init(RedisBackend(redis), prefix="cache")
         yield
 
-    app = FastAPI(lifespan=lifespan)
+    # app = FastAPI(lifespan=lifespan)
 
     app.add_middleware(
         CORSMiddleware,
@@ -77,16 +87,6 @@ def create_app():
                            prefix_format='/api/v{major}',
                            lifespan=lifespan,
                            )
-
-    app.include_router(router_auth)
-    app.include_router(router_users)
-    app.include_router(router_hotels)
-    app.include_router(router_rooms)
-    app.include_router(router_bookings)
-
-    app.include_router(router_images)
-    app.include_router(router_prometheus)
-    app.include_router(router_import)
 
     app.include_router(router_pages)
     app.include_router(base_router)
@@ -125,16 +125,16 @@ def create_app():
     return app
 
 
-app = create_app()
+# app = create_app()
 
-if __name__ == "__main__":
-    import uvicorn
+# if __name__ == "__main__":
+#     import uvicorn
 
-    import os.path
-    import sys
-    sys.path.append(os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), os.pardir))
-    uvicorn.run(
-        app="app.main:app",
-        reload=True,
-    )
+#     import os.path
+#     import sys
+#     sys.path.append(os.path.join(os.path.dirname(
+#         os.path.realpath(__file__)), os.pardir))
+#     uvicorn.run(
+#         app="app.main:app",
+#         reload=True,
+#     )
